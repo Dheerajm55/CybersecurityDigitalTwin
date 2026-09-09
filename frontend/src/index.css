@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* React Flow minimal theming so the digital twin graph matches the
+   restrained enterprise look rather than the library's default look. */
+.react-flow__node {
+  font-family: inherit;
+}
+.react-flow__attribution {
+  display: none;
+}

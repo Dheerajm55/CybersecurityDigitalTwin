@@ -1,0 +1,43 @@
+# --- Phase 1 & 2 (implemented in this build) ---
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+sqlalchemy==2.0.35
+pydantic==2.9.2
+pydantic-settings==2.5.2
+email-validator==2.2.0
+python-jose[cryptography]==3.3.0
+passlib[argon2]==1.7.4
+python-multipart==0.0.9
+networkx==3.3
+python-dotenv==1.0.1
+
+# --- Optional, used only if DATABASE_URL points at Postgres ---
+psycopg2-binary==2.9.9
+
+# --- Phase 3+ (attack graph / risk engine extras) ---
+# already covered by networkx above
+
+# --- Phase 4+ (ML) - risk prediction models (XGBoost, LightGBM, Random Forest) ---
+xgboost==2.1.1
+lightgbm==4.5.0
+scikit-learn==1.5.2
+joblib==1.4.2
+numpy==1.26.4
+pandas==2.2.3
+# shap==0.46.0  # left for a later explainability phase
+
+# --- Phase 5+ (graph neural nets) - heavy, optional ---
+# torch==2.4.1
+# torch-geometric==2.6.1
+
+# --- Phase 7+ (RAG / embeddings) - optional ---
+# sentence-transformers==3.1.1
+# pgvector==0.3.4
+# qdrant-client==1.11.2
+
+# --- Testing ---
+pytest==8.3.3
+httpx==0.27.2
+
+# --- Phase 9 (reports) ---
+reportlab==4.2.5

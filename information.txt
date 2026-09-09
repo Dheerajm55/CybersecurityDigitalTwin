@@ -1,0 +1,166 @@
+CDT2 — PROJECT INFORMATION
+=================================================
+Generated: this build was produced from a detailed master specification
+for an AI-powered cybersecurity digital twin platform.
+
+WHAT THIS PROJECT IS
+---------------------
+A defensive-only web application that represents an organization's
+digital environment (users, devices, accounts, cloud resources,
+databases, etc.) as a graph, then:
+
+  - computes an explainable "Project Risk Score" for every asset,
+  - simulates hypothetical attack paths through that graph
+    (mathematical analysis only — no real exploitation),
+  - lets you run "what-if" scenarios (e.g. "what if I enable MFA?")
+    and see the estimated risk change,
+  - tracks vulnerabilities and recommended security controls.
+
+It is explicitly NOT an offensive hacking tool. No part of it performs
+real credential theft, phishing, malware, exploitation, privilege
+escalation, or unauthorized network access, and it never stores real
+passwords, private keys, or API secrets for the assets it models.
+
+HOW MUCH OF THE ORIGINAL SPEC IS BUILT
+----------------------------------------
+This project was built from two master specifications delivered in
+sequence: the core Cybersecurity Digital Twin (42 sections) and an
+extension, the Cyber Attack & Defense Simulator (46 sections). Both
+explicitly said to build in phases rather than all at once.
+
+CORE DIGITAL TWIN — what's built:
+The core platform delivers a genuinely working Phase 1 + Phase 2, plus
+working pieces of Phase 3 (deterministic attack-path engine) and Phase 9
+(what-if simulator) — enough that the full demo flow described in the
+spec (dashboard -> digital twin -> simulate compromise -> why? ->
+what-if simulator -> risk drops) actually works end to end against
+real (synthetic) data, not hardcoded numbers.
+
+CYBER ATTACK & DEFENSE SIMULATOR — what's built:
+A safe, non-destructive cyber-range module at /simulator, covering
+Phases 1-9 of its own spec (clean two-sided UI, drag/drop components,
+connections, a data-driven scenario library, a real deterministic
+simulation engine with a rules engine for firewall/MFA/segmentation,
+compromised-state visualization, and a chained "apply defense" what-if
+flow), plus two of its "futuristic" features implemented for real
+rather than faked: an Attack Path Predictor and a Defense Optimizer,
+both of which work by actually re-running the simulation engine many
+times and ranking the real results — not a lookup table. See
+SIMULATOR.md for the full writeup and its own honest status table.
+
+Nothing in the simulator performs a real action against any system.
+There is no malware, exploit code, payload, credential theft, or
+scanning anywhere in this codebase. Every "attack" is a graph traversal
+over a topology the user builds in the browser, evaluated against
+transparent, readable rules.
+
+Concretely implemented and working across both modules:
+  - React + TypeScript + Vite + Tailwind frontend, styled to the exact
+    restrained enterprise palette requested (no neon, no glassmorphism)
+  - FastAPI backend with JWT auth and Argon2 password hashing
+  - A relational database (SQLite by default, Postgres-compatible)
+  - Full asset CRUD, relationships, vulnerabilities, security controls
+  - A digital twin graph view (React Flow) with filters, search, and a
+    node details panel
+  - A deterministic, fully explainable risk-scoring engine (not ML —
+    on purpose, per the spec's own rule that the app must never depend
+    entirely on AI)
+  - A real attack-path engine using NetworkX and Dijkstra's algorithm
+    over the actual seeded graph data
+  - A what-if simulator that computes real before/after risk numbers
+  - Deterministic synthetic demo data, auto-seeded on first run, so the
+    app is never empty
+  - A separate, safe Cyber Attack & Defense Simulator with its own
+    deterministic engine, scenario library, environment templates,
+    real-world case studies, path predictor, and defense optimizer
+
+Explicitly NOT implemented (stubbed in the UI with a plain explanation
+of what phase they belong to, rather than faked):
+  - The 10 ML models (XGBoost, LightGBM, Random Forest, Isolation
+    Forest, Autoencoder, GraphSAGE, GAT, GCN, transformer text
+    classifier, sentence-transformer embeddings)
+  - The LLM "AI Security Advisor" / "AI Security Copilot" and RAG pipeline
+  - Live threat-intelligence ingestion (MITRE ATT&CK / NVD / CISA KEV)
+  - Neo4j (NetworkX is used instead for this build — see
+    ARCHITECTURE.md for why and how Neo4j would slot in later)
+  - PDF report generation (both modules)
+  - Cyber Time Machine, Digital Twin Snapshots, Attack/Defense Score,
+    and AI-assisted topology generation (simulator "futuristic"
+    features not yet built — see SIMULATOR.md)
+  - Automated tests
+  - Undo (Ctrl/Cmd+Z) in the simulator
+  - Rate limiting, audit logging, and other hardening items listed in
+    SECURITY.md
+
+Nothing above was faked or hardcoded to look finished — see each page
+in the app for an honest "not built yet, planned for Phase X" message
+instead.
+
+LOGIN BUG FIX + LIVE TELEMETRY UPGRADE (this pass)
+-----------------------------------------------------
+Fixed a real login bug (POST /api/auth/login returning 422, and a
+React "Objects are not valid as a React child" crash) and began a live
+telemetry/WebSocket upgrade on top of the existing app. See the
+delivery chat for the full root-cause explanation and file list.
+
+ACTION REQUIRED BEFORE RESTARTING THE BACKEND:
+This project has no migration system (no Alembic) and uses
+`Base.metadata.create_all()`, which only creates missing TABLES, not
+missing COLUMNS on tables that already exist. This pass added new
+columns to `security_events` (risk_impact, status, source,
+destination) and `assets` (source_type). If you already have a
+`backend/cyber_twin.db` file from a previous run, DELETE IT before
+restarting the backend, or you will get "no such column" errors:
+
+    rm backend/cyber_twin.db
+
+A fresh database will be created and reseeded automatically on the
+next backend startup.
+
+IMPORTANT LIMITATION OF THIS DELIVERY
+----------------------------------------
+The environment this project was built in has no internet access, so
+`npm install` could not be run to actually boot the frontend and click
+through the application end to end. All backend Python files were
+verified to compile with no syntax errors, and — unlike a purely
+static review — the new simulation engine (backend/app/simulation_engine
+/engine.py) was actually executed with sample topologies during
+development: an undefended credential-compromise path was confirmed to
+fully compromise, an MFA-defended path was confirmed to get detected
+and blocked, a firewall-guarded path was confirmed to block at the
+firewall node, and the defense-optimizer logic was confirmed to rank
+"Enable firewall rule" and "Network segmentation" above irrelevant
+controls (MFA, monitoring) for a network-category scenario, with zero
+effect correctly reported for the irrelevant ones rather than fake
+uniform numbers. The frontend TypeScript was hand-reviewed (several
+real type issues were found and fixed during review, including a
+useNodesState generic-type mismatch and a mismatched Impact/explanation
+field in the compromise-details panel) but was not run through the
+TypeScript compiler or a dev server. Before relying on this in a real
+demo, run:
+
+    cd backend  && pip install -r requirements.txt && uvicorn app.main:app --reload
+    cd frontend && npm install && npm run dev
+
+and fix anything that surfaces — it's realistic that small issues will
+show up on first real run of the frontend specifically, as with any
+UI code that hasn't been executed in a browser yet.
+
+WHERE TO GO NEXT
+------------------
+README.md         - setup instructions and full status table
+ARCHITECTURE.md   - how the pieces fit together and why
+SIMULATOR.md      - the Cyber Attack & Defense Simulator module
+ML_MODELS.md      - the ML model plan (Phase 4+), honestly labeled as
+                    not yet built
+SECURITY.md       - what's secured, what isn't yet, and why
+API.md            - full endpoint reference, including /simulator
+
+FILES YOU WON'T FIND (AND WHY)
+---------------------------------
+- No real credentials, API keys, or secrets anywhere in this project.
+  `.env.example` contains only placeholders.
+- No trained model files (.joblib, .pt, etc.) — no models have been
+  trained yet in this build.
+- No real threat-intelligence data dump — MITRE/NVD/CISA data is not
+  ingested in this build.

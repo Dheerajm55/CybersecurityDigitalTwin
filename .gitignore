@@ -1,0 +1,22 @@
+# --- Python / backend ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.db
+*.sqlite3
+.env
+
+# --- Trained ML model artifacts (Phase 4.4) — regenerate with
+# `python -m app.ml.training`, do not commit large binaries ---
+backend/models/*.joblib
+
+# --- Node / frontend ---
+node_modules/
+dist/
+.vite/
+
+# --- Editors / OS ---
+.DS_Store
+.vscode/
+.idea/
